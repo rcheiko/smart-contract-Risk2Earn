@@ -1,4 +1,3 @@
-node_modules
 .env
 coverage
 coverage.json
@@ -9,6 +8,9 @@ typechain-types
 cache
 artifacts
 
+# Configuration vscode
 .vscode
+
+# development
 package-lock.json
 node_modules
