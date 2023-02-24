@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.12;
+pragma solidity ^0.8.4;
 
 //@author : rcheiko
 
@@ -8,8 +8,11 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "./ERC721A.sol";
+import "./IERC721A.sol";
+import "./extensions/ERC721AQueryable.sol";
+import "./extensions/IERC721AQueryable.sol";
 
-contract RiskNftERC721A is Ownable, ERC721A {
+contract RiskNftERC721A is Ownable, ERC721A, ERC721AQueryable {
     using Strings for uint256;
 
     enum Step {
@@ -28,8 +31,8 @@ contract RiskNftERC721A is Ownable, ERC721A {
     uint256 private constant MAX_PUBLIC = 8900;
     uint256 private constant MAX_GIFT = 100;
 
-    uint256 public wlSalePrice = 3 ether; // 3 matic
-    uint256 public publicSalePrice = 5 ether; // 5 matic
+    uint256 public wlSalePrice = 0.001 ether; // 3 matic
+    uint256 public publicSalePrice = 0.002 ether; // 5 matic
 
     bytes32 public merkleRoot;
 
@@ -85,12 +88,7 @@ contract RiskNftERC721A is Ownable, ERC721A {
         sellingStep = Step(_step);
     }
 
-    function tokenURI(uint256 _tokenId)
-        public
-        view
-        override
-        returns (string memory)
-    {
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
         require(
             _exists(_tokenId),
             "ERC721Metadata: URI query for nonexistent token"
