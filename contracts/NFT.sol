@@ -102,6 +102,12 @@ contract NftERC721A is Ownable, ERC721A, ERC721AQueryable {
         _safeMint(_to, _quantity);
     }
 
+
+    /**
+     * @dev Mint NFTs for whitelisted users.
+     * @param _quantity The quantity of NFTs to mint.
+     * @param _proof The merkle proof.
+     */
     function whitelistMint(uint256 _quantity, bytes32[] calldata _proof)
         external
         payable
@@ -127,6 +133,11 @@ contract NftERC721A is Ownable, ERC721A, ERC721AQueryable {
         _safeMint(msg.sender, _quantity);
     }
 
+
+    /**
+    * @dev Mint NFTs for public users.
+    * @param _quantity The quantity of NFTs to mint.
+    */
     function publicSaleMint(uint256 _quantity) external payable callerIsUser {
         uint256 price = publicSalePrice * _quantity;
         require(price != 0, "Price is zero");
