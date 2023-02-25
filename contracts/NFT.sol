@@ -12,7 +12,7 @@ import "./IERC721A.sol";
 import "./extensions/ERC721AQueryable.sol";
 import "./extensions/IERC721AQueryable.sol";
 
-contract RiskNftERC721A is Ownable, ERC721A, ERC721AQueryable {
+contract NftERC721A is Ownable, ERC721A, ERC721AQueryable {
     using Strings for uint256;
 
     enum Step {
