@@ -33,13 +33,41 @@ contract stakingNft is Ownable {
         uint256 stakingEndTime,
         uint256 rewards
     );
-    event Claimed(address indexed owner, uint24 tokenId, uint256 rewards);
+    event Claimed(address indexed owner, uint256 rewards);
 
     constructor(address _nft, address _token) {
         nft = NftERC721A(_nft);
         token = tokenERC20(_token);
     }
 
+    /**
+     * @dev Sets the rewards per hour
+     * @param _rewardsPerHour The rewards per hour
+     */
+    function setRewardsPerHour(uint256 _rewardsPerHour) external onlyOwner {
+        rewardsPerHour = _rewardsPerHour;
+    }
+
+    /**
+     * @dev Gets the rewards per hour
+     * @param _tokenId The token id
+     * @param stakingEndTime The staking end time
+     */
+    function getRewards(uint256 _tokenId, uint256 stakingEndTime)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 rewards = (((stakingEndTime -
+            NFTsStaked[_tokenId].stakingStartTime) * rewardsPerHour) / 3600) *
+            10**18;
+        return rewards;
+    }
+
+    /**
+     * @dev Stakes NFTs
+     * @param tokenIds Array of token ids
+     */
     function stake(uint256[] calldata tokenIds) external {
         require(
             tokenIds.length <= 10,
@@ -70,7 +98,14 @@ contract stakingNft is Ownable {
         }
     }
 
+    /**
+     * @dev Unstakes NFTs and claims rewards
+     * @param tokenIds Array of token ids
+     */
     function unstake(uint256[] calldata tokenIds) external {
+
+        uint256 stakingEndTime = block.timestamp;
+
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(
                 NFTsStaked[tokenIds[i]].owner == msg.sender,
@@ -81,10 +116,7 @@ contract stakingNft is Ownable {
                 "This NFT is not staked"
             );
 
-            uint256 stakingEndTime = block.timestamp;
-            uint256 rewards = (((stakingEndTime -
-                NFTsStaked[tokenIds[i]].stakingStartTime) * rewardsPerHour) /
-                3600) * 10**18;
+            uint256 reward = getRewards(tokenIds[i], stakingEndTime);
 
             delete NFTsStaked[tokenIds[i]];
 
@@ -102,8 +134,14 @@ contract stakingNft is Ownable {
         }
     }
 
-
+    /**
+     * @dev Claims rewards
+     * @param tokenIds Array of token ids
+     */
     function claim(uint256[] calldata tokenIds) external {
+        uint256 totalRewards;
+        uint256 stakingEndTime = block.timestamp;
+
         for (uint256 i = 0; i < tokenIds.length; i++) {
             require(
                 NFTsStaked[tokenIds[i]].owner == msg.sender,
@@ -114,16 +152,53 @@ contract stakingNft is Ownable {
                 "This NFT is not staked"
             );
 
-            uint256 stakingEndTime = block.timestamp;
-            uint256 rewards = (((stakingEndTime -
-                NFTsStaked[tokenIds[i]].stakingStartTime) * rewardsPerHour) /
-                3600) * 10**18;
+            uint256 reward = getRewards(tokenIds[i], stakingEndTime);
 
-            token.mint(msg.sender, rewards);
+            totalRewards += rewards;
 
             NFTsStaked[tokenIds[i]].stakingStartTime = stakingEndTime;
-
-            emit Claimed(msg.sender, uint24(tokenIds[i]), rewards);
         }
+
+        token.mint(msg.sender, totalRewards);
+        emit Claimed(msg.sender, totalRewards);
+    }
+
+    /**
+     * @dev Gets the total rewards if you claim now
+     * @param tokenIds Array of token ids
+     */
+    function getRewardAmount(uint256[] calldata tokenIds)
+        external
+        view
+        returns (uint256 rewards)
+    {
+        uint256 totalRewards;
+        uint256 stakingEndTime = block.timestamp;
+
+        for (uint256 i = 0; i < tokenIds.length; i++) {
+            uint256 reward = getRewards(tokenIds[i], stakingEndTime);
+            totalRewards += reward;
+        }
+        return TotalRewards;
+    }
+
+    /**
+     * @dev Gets all the NFTs staked by the owner
+     * @param _owner The address you want to check
+     */
+    function tokensStakedByOwner(address _owner)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        uint256[] memory result = new uint256[](totalStaked);
+        uint256 counter = 0;
+        for (uint256 i = 0; i < totalStaked; i++) {
+            if (NFTsStaked[i].owner == _owner) {
+                result[counter] = NFTsStaked[i].tokenId;
+                counter++;
+            }
+        }
+        return result;
     }
 }
